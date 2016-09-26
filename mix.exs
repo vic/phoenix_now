@@ -77,8 +77,8 @@ defmodule Now.Mixfile do
     """ |> String.replace("\n", " "))
 
     # finally copy the release to build host
-    File.mkdir_p "rel/#{app}/bin"
-    0 = Mix.shell.cmd ~s(docker cp #{vol}:/build/rel/#{app}/bin/#{app} rel/#{app}/bin/#{bin})
+    File.mkdir_p "rel/#{app}/releases/#{version}"
+    0 = Mix.shell.cmd ~s(docker cp #{vol}:/build/rel/#{app}/releases/#{version}/#{app}.tar.gz rel/#{app}/releases/#{version}/#{bin}.tar.gz)
 
     # and remove the volume
     0 = Mix.shell.cmd ~s(docker rm -f #{vol} 2>/dev/null || true)
