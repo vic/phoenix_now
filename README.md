@@ -1,15 +1,36 @@
-# Now
+# Example Phoenix deployment on Zeit Now.
 
-To start your Phoenix app:
+This is an example project showing how to build a phoenix app with docker and publish it on Zeit.
 
-  * Install dependencies with `mix deps.get`
-  * Create and migrate your database with `mix ecto.create && mix ecto.migrate`
-  * Install Node.js dependencies with `npm install`
-  * Start Phoenix endpoint with `mix phoenix.server`
+# Usage (Adapting for your application)
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+### Distillery
 
-Ready to run in production? Please [check our deployment guides](http://www.phoenixframework.org/docs/deployment).
+Add a dependency on your `mix.exs` file for [distillery](https://hexdocs.pm/distillery/getting-started.html) 
+Setup your `rel/config.exs` file.
+
+### Review elixir version
+
+Check on `Dockerfile*` for the correct elixir version to be used during build.
+
+### Adapt your project 
+
+- Copy this project's `docker_build` task
+
+### Build the image using docker
+
+Building the release inside docker is important if you want to include the ERTS (erlang runtime)
+as the binary needs to be created for the target platform.
+
+```shell
+mix docker.build
+```
+
+### Upload to Zeit using `now`
+
+```shell
+now
+```
 
 ## Learn more
 

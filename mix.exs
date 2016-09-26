@@ -37,7 +37,8 @@ defmodule Now.Mixfile do
      {:phoenix_html, "~> 2.6"},
      {:phoenix_live_reload, "~> 1.0", only: :dev},
      {:gettext, "~> 0.11"},
-     {:cowboy, "~> 1.0"}]
+     {:cowboy, "~> 1.0"},
+     {:distillery, "~> 0.9.9", app: false}]
   end
 
   # Aliases are shortcuts or tasks specific to the current project.
@@ -49,6 +50,41 @@ defmodule Now.Mixfile do
   defp aliases do
     ["ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
      "ecto.reset": ["ecto.drop", "ecto.setup"],
-     "test": ["ecto.create --quiet", "ecto.migrate", "test"]]
+     "test": ["ecto.create --quiet", "ecto.migrate", "test"],
+     "docker.build": &docker_build/1 ]
   end
+
+  # Shamefuly stolen from https://github.com/merqlove/elixir-docker-compose/blob/master/release.sh
+  defp docker_build(_) do
+    {app, version} = {project[:app], project[:version]}
+
+    bin = "docker-#{app}-#{version}"
+    vol = "docker_build_#{app}"
+    tag = "rel-#{app}:#{version}"
+
+    # create a volume
+    0 = Mix.shell.cmd ~s(docker rm -f #{vol} 2>/dev/null || true)
+    0 = Mix.shell.cmd ~s(docker create -v /build/deps -v /build/_build -v /build/rel -v /root/.cache/rebar3/ --name #{vol} busybox /bin/true)
+
+    # build the docker image for creating the release
+    0 = Mix.shell.cmd ~s(docker build -f Dockerfile.build . --tag "#{tag}")
+    0 = Mix.shell.cmd(~s"""
+    docker run
+       --volumes-from #{vol}
+       --rm -t #{tag}
+       sh -c "cp config.exs rel/config.exs &&
+              mix do deps.get, compile, release --env=prod"
+    """ |> String.replace("\n", " "))
+
+    # finally copy the release to build host
+    File.mkdir_p "rel/#{app}/bin"
+    0 = Mix.shell.cmd ~s(docker cp #{vol}:/build/rel/#{app}/bin/#{app} rel/#{app}/bin/#{bin})
+
+    # and remove the volume
+    0 = Mix.shell.cmd ~s(docker rm -f #{vol} 2>/dev/null || true)
+    0 = Mix.shell.cmd ~s(docker rmi #{tag})
+
+    :ok
+  end
+
 end
