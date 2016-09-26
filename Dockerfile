@@ -1,16 +1,15 @@
-FROM busybox
+FROM elixir:1.3-slim
 
 ARG APP
 ARG VERSION
 
-RUN mkdir /app
-WORKDIR /app
 
-COPY rel/$APP/releases/$VERSION/docker-$APP-$VERSION.tar.gz /app/tar.gz
-RUN ls -la /app
-RUN tar -xzf /app/tar.gz
+COPY rel/$APP/releases/$VERSION/docker-$APP-$VERSION.tar.gz /app.tar.gz
+RUN tar -xzf /app.tar.gz
 
-WORKDIR /app/releases/$VERSION
+WORKDIR /releases/$VERSION
+RUN ln -s /bin/$APP /app
 
 EXPOSE 4000
-CMD ["/bin/ls", "-la", "/app/bin"]
+ENTRYPOINT ["/app"]
+CMD ["foreground"]
